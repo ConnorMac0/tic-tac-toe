@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <iostream>
+#include <cstdlib>
+#include <ctime>
+#include <cctype>
 
 using namespace std;
 char bot = 'O';
@@ -146,10 +149,8 @@ void botMove(char board[3][3]){
     board[optRow][optCol] = bot;
 }
 
-void singlePlayer(char board[3][3]) {
-
-    while(movesLeft(board)) {
-
+bool checkState(char board[3][3], bool mode) {
+    if (!mode){
         if(checkWin(board, player)){
             makeBoard(board);
             cout << "####################\n";
@@ -157,10 +158,9 @@ void singlePlayer(char board[3][3]) {
             cout << "##    You Win!    ##\n";
             cout << "##                ##\n";
             cout << "####################\n";
-            break;
+            return false;
         }
 
-        botMove(board);
         if(checkWin(board, bot)){
             makeBoard(board);
             cout << "#####################\n";
@@ -168,42 +168,9 @@ void singlePlayer(char board[3][3]) {
             cout << "##    You Lose!    ##\n";
             cout << "##                 ##\n";
             cout << "#####################\n";
-            break;
+            return false;
         }
-        makeBoard(board);
-
-        while (true){
-            cout << "Player " << player;
-            cout << ", enter row (0-2) and col (0-2): ";
-            cin >> row >> col;
-
-            if (board[row][col] != ' ' || row > 2 || row < 0 || col > 2 || col < 0)
-                cout << "Invalid move, please try again. \n";
-            else
-                break;
-        }
-        board[row][col] = player;
-    }
-}
-
-void multiPlayer(char board[3][3]) {
-
-    for (int i = 0; i < 9; i++){
-
-        makeBoard(board);
-
-        while (true){
-            cout << "Player " << player;
-            cout << ", enter row (0-2) and col (0-2): ";
-            cin >> row >> col;
-
-            if (board[row][col] != ' ' || row > 2 || row < 0 || col > 2 || col < 0)
-                cout << "Invalid move, please try again. \n";
-            else
-                break;
-        }
-        board[row][col] = player;
-
+    } else {
         if(checkWin(board, player)){
             makeBoard(board);
             cout << "####################\n";
@@ -211,8 +178,75 @@ void multiPlayer(char board[3][3]) {
             cout << "## Player " << player << " Wins! ##\n";
             cout << "##                ##\n";
             cout << "####################\n";
-            break;
+            return false;
         }
+    }
+
+    if (!checkWin(board, 'X') && !checkWin(board, 'O') && !movesLeft(board)){
+        makeBoard(board);
+        cout << "####################\n";
+        cout << "##                ##\n";
+        cout << "##     Draw!      ##\n";
+        cout << "##                ##\n";
+        cout << "####################\n";
+        return false;
+    }
+
+    return true;
+}
+
+void singlePlayer(char board[3][3]) {
+    srand(time(0));
+    int playerTurn = rand() % 2;
+
+    while(checkState(board, 0)) {
+        if (!playerTurn){
+            botMove(board);
+            playerTurn = !playerTurn;
+        } else {
+            makeBoard(board);
+
+            while (true){
+                cout << "Player " << player;
+                cout << ", enter row (0-2) and col (0-2): ";
+                if (cin >> row && cin >> col){
+                    if (board[row][col] != ' ' || row > 2 || row < 0 || col > 2 || col < 0)
+                        cout << "Invalid move, please try again. \n";
+                    else
+                        break;
+                } else{
+                    cout << "Invalid move, please try again. \n";
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                }
+            }
+            board[row][col] = player;
+            playerTurn = !playerTurn;
+        }
+    }
+}
+
+void multiPlayer(char board[3][3]) {
+
+    while(checkState(board, 1)){
+
+        makeBoard(board);
+
+        while (true){
+            cout << "Player " << player;
+            cout << ", enter row (0-2) and col (0-2): ";
+            if (cin >> row && cin >> col){
+                if (board[row][col] != ' ' || row > 2 || row < 0 || col > 2 || col < 0)
+                    cout << "Invalid move, please try again. \n";
+                else
+                    break;
+            } else {
+                cout << "Invalid move, please try again. \n";
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            }
+        }
+        board[row][col] = player;
 
         player = (player == 'X') ? 'O' : 'X';
     }
@@ -224,23 +258,24 @@ int main() {
                          {' ',' ',' '}, 
                          {' ',' ',' '} };
     
-    cout << "Would you like to play single (0) or multiplayer (1): ";
-    cin >> mode;
+    while (true) {
+        cout << "Welcome!, Would you like to play singleplayer (0) or multiplayer (1): ";
+        if (cin >> mode) {
+            if (mode != 0 && mode != 1)
+                cout << "Please select 0 or 1 to choose your game mode. \n";
+            else
+                break;
+        } else {
+            cout << "Please select 0 or 1 to choose your game mode. \n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+    }
 
-    cout << "Tic-Tac-Toe!!\n";
     if (mode)
         multiPlayer(board);
     else
         singlePlayer(board);
-
-    if (!checkWin(board, 'X') && !checkWin(board, 'O')){
-        makeBoard(board);
-        cout << "####################\n";
-        cout << "##                ##\n";
-        cout << "##     Draw!      ##\n";
-        cout << "##                ##\n";
-        cout << "####################\n";
-    }
 
     return 0;
 }
